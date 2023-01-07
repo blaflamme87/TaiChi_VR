@@ -90,7 +90,7 @@ TArray<FGesture> UCustomHandComponent::LoadGesturesFromDataTable()
 				return LocalGestures;
 			}
 			FGesture LocalGesture;
-			LocalGesture.BoneLocations = LocalGestureData->BoneLocations;
+			LocalGesture.BoneTransformMap = LocalGestureData->BoneTransformMap;
 			LocalGesture.GestureName = RowName;
 			LocalGesture.RootTransformMatters = LocalGestureData->RootTransformMatters;
 			LocalGesture.RootTransform = FTransform(LocalGestureData->RootRotation, LocalGestureData->RootLocation, FVector(1.f, 1.f, 1.f));
@@ -118,9 +118,8 @@ bool UCustomHandComponent::DoesGestureExist(UGestureSaveGame* SaveObject, FName 
 void UCustomHandComponent::RecordGesture(FName GestureName, bool RootTransformMatters)
 {
 	GestureSaveGameObject = LoadGesturesSaveObject();
-
-
-	TArray<FVector> BoneLocations;
+	
+	TMap<FName, FTransform> BoneTransformMap;
 	FGesture Gesture;
 
 	if (RootTransformMatters)
@@ -142,11 +141,10 @@ void UCustomHandComponent::RecordGesture(FName GestureName, bool RootTransformMa
 	for (int i = 0; i < LastBoneIndex; i++)
 	{
 		FName BoneName = GetBoneName(i);
-		FVector BoneLocation = GetBoneLocationByName(BoneName, EBoneSpaces::ComponentSpace);
-		BoneLocations.Add(BoneLocation);
+		BoneTransformMap.Add(BoneName, GetBoneTransformByName(BoneName, EBoneSpaces::ComponentSpace));	
 	}
 
-	Gesture.BoneLocations = BoneLocations;
+	Gesture.BoneTransformMap = BoneTransformMap;
 	Gesture.GestureName = GestureName;
 	GestureSaveGameObject->Gestures.Add(Gesture);
 
@@ -157,32 +155,7 @@ void UCustomHandComponent::RecordGesture(FName GestureName, bool RootTransformMa
 
 }
 
-FGesture UCustomHandComponent::RecordGestureToDisk(FName GestureName)
-{
 
-	FGesture Gesture;
-
-
-	TArray<FVector> BoneLocations;
-
-	int LastBoneIndex = GetNumBones() - 1;
-
-	for (int i = 0; i < LastBoneIndex; i++)
-	{
-		FName BoneName = GetBoneName(i);
-		FVector BoneLocation = GetBoneLocationByName(BoneName, EBoneSpaces::ComponentSpace);
-		BoneLocations.Add(BoneLocation);
-		UE_LOG(LogTemp, Warning, TEXT("turzt Write Gesture : Bone Location is %s"), *BoneLocation.ToString());
-	}
-
-
-	Gesture.BoneLocations = BoneLocations;
-	Gesture.GestureName = GestureName;
-
-	return Gesture;
-
-
-}
 
 void UCustomHandComponent::DeleteGesture(FName GestureName)
 {
@@ -232,20 +205,34 @@ TArray<FGesture> UCustomHandComponent::DetectCurrentGestures()
 
 		}
 
-		int LastIndex = Gesture.BoneLocations.Num();
+		int LastIndex = Gesture.BoneTransformMap.Num();
 		for (int i = 0; i < LastIndex; i++)
 		{
-			FVector GestureBoneLocationAtIndex = Gesture.BoneLocations[i];
-			FVector CurrentBoneLocationAtIndex = GetBoneLocationByName(GetBoneName(i), EBoneSpaces::ComponentSpace);
+			FTransform GestureBoneTransformAtIndex = *Gesture.BoneTransformMap.Find(GetBoneName(i));
+			FTransform CurrentBoneTransformAtIndex = GetBoneTransformByName(GetBoneName(i), EBoneSpaces::ComponentSpace);
 
+			//DrawDebugLine(GetWorld(), GetComponentLocation(), GetComponentLocation() + (ComponentWorldUpVector * 25.f), FColor::Green, false, .033f);
+			//DrawDebugLine(GetWorld(), GetBoneLocation(GetBoneName(0)), GetBoneLocation(GetBoneName(0)) + (GestureWorldUpVector * 25.f), FColor::Red, false, .033f);
+			
+			
+			//UE_LOG(LogTemp, Warning, TEXT("tezt %s :: current has a rotation of %s  ::  gesture has a rotation of %s"), *GetBoneName(i).ToString(), *CurrentBoneTransformAtIndex.GetRotation().ToString(), *GestureBoneTransformAtIndex.GetRotation().ToString());
 
-
-			float BoneLocationDifference = FMath::Abs((GestureBoneLocationAtIndex - CurrentBoneLocationAtIndex).Size());
-
-			if (BoneLocationDifference > GestureThreshold)
+			if (!FTransform::AreRotationsEqual(GestureBoneTransformAtIndex, CurrentBoneTransformAtIndex, GestureThreshold))
 			{
+				//UE_LOG(LogTemp, Warning, TEXT("tezt NOT A VALID GESTURE"));
+
 				bValidGesture = false;
 			}
+
+			//FVector GestureBoneLocationAtIndex = Gesture.BoneLocations[i];
+			//FVector CurrentBoneLocationAtIndex = GetBoneLocationByName(GetBoneName(i), EBoneSpaces::ComponentSpace);
+
+			//float BoneLocationDifference = FMath::Abs((GestureBoneLocationAtIndex - CurrentBoneLocationAtIndex).Size());
+
+			//if (BoneLocationDifference > GestureThreshold)
+			//{
+			//	bValidGesture = false;
+			//}
 		}
 
 		if (bValidGesture)

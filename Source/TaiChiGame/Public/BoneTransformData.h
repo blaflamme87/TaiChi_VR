@@ -1,21 +1,19 @@
 #pragma once
-#include "GestureStruct.generated.h"
+#include "BoneTransformData.generated.h"
+
 
 USTRUCT(BlueprintType)
-struct FGesture
+struct FBoneTransformData
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName GestureName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<FName, FTransform> BoneTransformMap;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool RootTransformMatters = false;
+	float BoneLocationTolerance = 3.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FTransform RootTransform;
+	float BoneRotationTolerance = 45.f;
 
 };

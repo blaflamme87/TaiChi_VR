@@ -182,12 +182,9 @@ public:
 	void RecordGesture(FName GestureName, bool RootTransformMatters = false);
 
 	UFUNCTION(BlueprintCallable)
-	FGesture RecordGestureToDisk(FName GestureName);
-
-	UFUNCTION(BlueprintCallable)
 	void DeleteGesture(FName GestureName);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable) 
 	TArray<FGesture> DetectCurrentGestures();
 
 	UFUNCTION(BlueprintCallable)

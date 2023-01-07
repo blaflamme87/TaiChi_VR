@@ -10,15 +10,15 @@ struct FGestureData : public FTableRowBase
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray<FVector> BoneLocations;
+	TMap<FName, FTransform> BoneTransformMap;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool RootTransformMatters;
+	bool RootTransformMatters;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FRotator RootRotation;
+	FRotator RootRotation;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FVector RootLocation;
+	FVector RootLocation;
 
 };
