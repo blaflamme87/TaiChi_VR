@@ -11,6 +11,25 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGestureSequenceDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGestureIndexDelegate, int, GestureIndex);
 
+USTRUCT(BlueprintType)
+struct FGestureTutorialData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UCustomHandComponent* LeftHand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UCustomHandComponent* RightHand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FName> SequenceGestureNames;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AGestureTutorial* GestureTutorial;
+
+};
+
 UCLASS(BlueprintType)
 class TAICHIGAME_API AGestureTutorial : public AActor
 {
@@ -19,6 +38,8 @@ class TAICHIGAME_API AGestureTutorial : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AGestureTutorial();
+
+	void SetupTutorial(FGestureTutorialData TutorialData);
 
 	UPROPERTY(BlueprintAssignable)
 	FGestureIndexDelegate OnNextGestureDetected;
@@ -37,24 +58,15 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UPoseableMeshComponent> TutorialHandRight;
-
+ 
 	UPROPERTY(EditAnywhere)
-	float RootLocationThreshold = 5.f;
-
-	UPROPERTY(EditAnywhere)
-	float RootRotationThreshold = 45.f;
-
-	UPROPERTY(EditAnywhere)
-	float BoneRotationThreshold = 1.f; 
-
-	UPROPERTY(EditAnywhere)
-	float BoneLocationThreshold = 3.f;
+	float BoneLocationThreshold = 10.f;
 
 	UPROPERTY(EditAnywhere)
 	float DetectHandPoseUpdateInterval = .1f;
 
 	UPROPERTY(EditAnywhere)
-	float HandDetectionExpiredTime = 5.f;
+	float HandDetectionExpiredTime = 10.f;
 
 protected:
 	// Called when the game starts or when spawned

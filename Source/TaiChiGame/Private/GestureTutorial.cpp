@@ -22,6 +22,12 @@ AGestureTutorial::AGestureTutorial()
 
 }
 
+
+void AGestureTutorial::SetupTutorial(FGestureTutorialData TutorialData)
+{
+	
+}
+
 // Called when the game starts or when spawned
 void AGestureTutorial::BeginPlay()
 {
@@ -65,22 +71,16 @@ void AGestureTutorial::TrackGesture(FName GestureName)
 	GestureLeft = CurrentHandLeft->GetGestureFromName(GestureName);
 	GestureRight = CurrentHandRight->GetGestureFromName(GestureName);
 
-	if (TutorialHandLeft)
+	if (!(TutorialHandLeft && TutorialHandRight))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Tezt We have a LEFT hand!"))
+		UE_LOG(LogTemp, Warning, TEXT("Tezt We DONT have a LEFT and RIGHT hand!"))
 	}
-	if (TutorialHandRight)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Tezt We have a LEFT hand!"))
-	}
+
 	PoseHand(TutorialHandLeft, GestureLeft);
 	PoseHand(TutorialHandRight, GestureRight);
 
 	GetWorld()->GetTimerManager().ClearTimer(HandResetTimer);
 	GetWorld()->GetTimerManager().SetTimer(HandResetTimer, this, &AGestureTutorial::ResetTimerExpired, HandDetectionExpiredTime, false, HandDetectionExpiredTime);
-	
-
-
 }
 
 void AGestureTutorial::PoseHand(UPoseableMeshComponent* HandToPose, FGesture GestureData)
@@ -88,13 +88,13 @@ void AGestureTutorial::PoseHand(UPoseableMeshComponent* HandToPose, FGesture Ges
 	if (!HandToPose)
 	{ 
 		UE_LOG(LogTemp, Warning, TEXT("Tezt NO HAND TO POSE!"))
-
 		return; 
 	}
 
 	//APlayerCameraManager* CamManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
 	//FRotator AdjustedCamRotation = FRotator(0.f, CamManager->GetCameraRotation().Yaw, 0.f);
 	//FTransform AdjustedCamTransform = FTransform(AdjustedCamRotation, CamManager->GetCameraLocation(), FVector(1.f, 1.f, 1.f));
+
 	FVector WorldGestureRootLocation = OriginalCamTransform.TransformPosition(GestureData.RootTransform.GetLocation());
 	FRotator WorldGestureRootRotation = FRotator(OriginalCamTransform.TransformRotation(GestureData.RootTransform.GetRotation()));
 	FTransform TutorialHandWorldTransform = FTransform(WorldGestureRootRotation, WorldGestureRootLocation, FVector(1.f, 1.f, 1.f));
@@ -116,9 +116,20 @@ void AGestureTutorial::CheckHandsUpdate()
 	
 	if (LeftHandMatch && RightHandMatch)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("we are matching the pose! tezt"));
-
+		UE_LOG(LogTemp, Warning, TEXT("tezt BROADCAST THE SHIT"));
 		OnNextGestureDetected.Broadcast(CurrentGestureIndex);
+		OnNextGestureDetected.Broadcast(7);
+		TArray<UObject*> BoundObjects = OnNextGestureDetected.GetAllObjects();
+		bool bIsBound = OnNextGestureDetected.IsBound();
+		if (bIsBound)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("tezt oh yea we're bound alright.. soooo bound"));
+		}
+		for (UObject* BoundObj : BoundObjects)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("tezt Associated with %s"), *BoundObj->GetName());
+			 
+		}
 
 		CurrentGestureIndex++;
 
@@ -135,16 +146,25 @@ void AGestureTutorial::CheckHandsUpdate()
 
 bool AGestureTutorial::CheckHand(UPoseableMeshComponent* HandToMatch, UCustomHandComponent* HandToCheck)
 {
-	if (!(HandToMatch && HandToCheck)) { return false; }
+	if (!(HandToMatch && HandToCheck)) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("tezt there aint no hand to check or match!"));
+		return false; 
+	}
 
 	bool bHandMatchesPose = true;
 
 	TArray<FName> BoneNames;
 	HandToMatch->GetBoneNames(BoneNames);
+
+	if (BoneNames.Num() <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("tezt Hand's got no bones!!"));
+		return false;
+	}
+
 	for (FName BoneName : BoneNames)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("tezt bone name is %s"), *BoneName.ToString());
-
 		FVector TutorialBoneLocation = HandToMatch->GetBoneLocationByName(BoneName, EBoneSpaces::WorldSpace);
 		FVector CurrentBoneLocation = HandToCheck->GetBoneLocationByName(BoneName, EBoneSpaces::WorldSpace);
 		float BoneDistanceFromDesiredLocation = FVector::Dist(TutorialBoneLocation, CurrentBoneLocation);
@@ -153,9 +173,7 @@ bool AGestureTutorial::CheckHand(UPoseableMeshComponent* HandToMatch, UCustomHan
 		{
 			bHandMatchesPose = false;
 		}
-
 	}
-
 
 	return bHandMatchesPose;
 }
